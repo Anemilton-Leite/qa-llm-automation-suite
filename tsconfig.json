@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@api/*":   ["src/api/*"],
+      "@ui/*":    ["src/ui/*"],
+      "@utils/*": ["src/utils/*"]
+    }
+  },
+  "include": ["src/**/*", "playwright.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}

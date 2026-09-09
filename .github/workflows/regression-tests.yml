@@ -1,0 +1,110 @@
+name: 🤖 QA Automation — LLM Suite
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * *'   # Execução diária às 06:00 AM (regressão noturna)
+
+jobs:
+  # ── Testes de API (rápidos, sem browser) ─────────────────────────────────────
+  api-tests:
+    name: 🔌 API Tests — LLM Endpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright (Chromium only for API)
+        run: npx playwright install chromium --with-deps
+
+      - name: Run API Tests
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL || 'https://api.openai.com' }}
+          LLM_MODEL: ${{ vars.LLM_MODEL || 'gpt-4o-mini' }}
+        run: npx playwright test src/api/tests/ --project=api-chromium
+
+      - name: Upload API Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-test-report
+          path: playwright-report/
+          retention-days: 14
+
+  # ── Testes de UI (cross-browser) ─────────────────────────────────────────────
+  ui-tests:
+    name: 🖥️ UI Tests — Cross-browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: api-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, firefox, mobile-chrome]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run UI Tests — ${{ matrix.project }}
+        env:
+          BASE_URL: ${{ secrets.BASE_URL || 'https://claude.ai' }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: npx playwright test src/ui/tests/ --project=${{ matrix.project }}
+
+      - name: Upload UI Screenshots (on failure)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ui-screenshots-${{ matrix.project }}
+          path: test-results/
+          retention-days: 7
+
+      - name: Upload UI Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 14
+
+  # ── Sumário Final ─────────────────────────────────────────────────────────────
+  summary:
+    name: 📊 Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [api-tests, ui-tests]
+    if: always()
+    steps:
+      - name: Report Results
+        run: |
+          echo "╔══════════════════════════════════════════════╗"
+          echo "║     QA LLM AUTOMATION — PIPELINE RESULT     ║"
+          echo "╠══════════════════════════════════════════════╣"
+          echo "║  API Tests:   ${{ needs.api-tests.result }}"
+          echo "║  UI Tests:    ${{ needs.ui-tests.result }}"
+          echo "╚══════════════════════════════════════════════╝"
+
+      - name: Fail if any job failed
+        if: needs.api-tests.result == 'failure' || needs.ui-tests.result == 'failure'
+        run: exit 1

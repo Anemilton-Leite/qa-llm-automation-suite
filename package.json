@@ -1,0 +1,24 @@
+{
+  "name": "qa-llm-automation-suite",
+  "version": "1.0.0",
+  "description": "QA Automation Suite for AI/LLM Applications — Playwright + TypeScript — Anemilton Leite",
+  "author": "Anemilton Leite <Anemilton01@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test":             "playwright test",
+    "test:api":         "playwright test src/api/tests/",
+    "test:ui":          "playwright test src/ui/tests/",
+    "test:headed":      "playwright test --headed",
+    "test:debug":       "playwright test --debug",
+    "report":           "playwright show-report",
+    "typecheck":        "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "typescript":       "^5.3.3",
+    "dotenv":           "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
