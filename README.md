@@ -133,6 +133,38 @@ npm run report
 
 ---
 
+## 🔐 CI — Segredos e ativação dos testes
+
+Os testes validam **providers reais** (chamadas à API de inferência e à UI de chat).
+Por isso, no GitHub Actions eles **pulam automaticamente** quando as credenciais
+não estão configuradas — o pipeline fica verde de forma honesta, marcando os
+testes como _skipped_ (com o motivo no relatório), em vez de falhar com `401`.
+
+Para **executar os testes de verdade** no CI, configure em
+**Settings → Secrets and variables → Actions**:
+
+| Nome | Tipo | Obrigatório para | Descrição |
+|---|---|---|---|
+| `LLM_API_KEY` | Secret | Testes de **API** | Chave do provider LLM (OpenAI, OpenRouter, etc.). Sem ela, os testes de API são ignorados. |
+| `LLM_BASE_URL` | Secret | opcional | Base URL do provider (default: `https://api.openai.com`). |
+| `LLM_MODEL` | Variable | opcional | Modelo usado nos testes (default: `gpt-4o-mini`). |
+| `RUN_UI_E2E` | Variable | Testes de **UI** | Defina `true` para executar o E2E de UI. Sem isso, os testes de UI são ignorados. |
+| `BASE_URL` | Secret | Testes de **UI** | URL da aplicação de chat testada (default: `https://claude.ai`). |
+
+> ⚠️ **Sobre os testes de UI:** eles dirigem a aplicação web real (ex.: `claude.ai`),
+> que normalmente exige **sessão autenticada**. Em CI não há login persistente, então
+> só ative `RUN_UI_E2E=true` se `BASE_URL` apontar para uma aplicação acessível
+> sem autenticação interativa (ou com estado de sessão injetado). Caso contrário,
+> deixe-os como _skipped_.
+
+> 💸 **Custo:** com `LLM_API_KEY` configurada, os testes de API fazem chamadas reais
+> e **pagas** ao provider. Prefira um modelo barato e revise os limites de uso.
+
+Localmente, o comportamento é o mesmo: defina `LLM_API_KEY` (e `RUN_UI_E2E=true`
+para UI) no seu `.env` — veja `.env.example`.
+
+---
+
 ## 🌐 Compatível com qualquer provider LLM
 
 O `LlmApiClient` funciona com qualquer API compatível com a especificação OpenAI:
