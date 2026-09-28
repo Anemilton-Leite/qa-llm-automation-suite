@@ -17,6 +17,10 @@ test.describe('🖥️ UI — Interface de Chat com LLM', () => {
   let chatPage: ChatPage;
 
   test.beforeEach(async ({ page }) => {
+    test.skip(
+      process.env.RUN_UI_E2E !== 'true',
+      'UI E2E ignorado: requer a aplicação web autenticada e acessível (defina RUN_UI_E2E=true e BASE_URL com sessão válida).'
+    );
     chatPage = new ChatPage(page);
     await chatPage.goto();
   });

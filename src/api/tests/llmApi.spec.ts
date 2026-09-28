@@ -11,6 +11,10 @@ test.describe('🔌 API — LLM Endpoint Validation', () => {
   let client: LlmApiClient;
 
   test.beforeEach(({ request }) => {
+    test.skip(
+      !process.env.LLM_API_KEY,
+      'LLM_API_KEY não configurada — testes de API de LLM ignorados (defina o secret para executá-los contra um provider real).'
+    );
     client = new LlmApiClient(request);
   });
 
